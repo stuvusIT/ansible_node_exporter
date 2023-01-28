@@ -1,34 +1,44 @@
 # Role Name
 
-A brief description of the role goes here.
+This role installs a prometheus node exporter instance and configures it to expose metrics.
+The role is based on this [ansible-node-exporter role](https://github.com/cloudalchemy/ansible-node-exporter).
 
 
 ## Requirements
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here.
-For instance, if the role uses the EC2 module or depends on other Ansible roles, it may be a good idea to mention in this section that the boto package is required.
+The role was developed and tested on a machine running Debian.
+If you want to secure your installation by using TLS, you need to provide appropriate certificates.
 
 
 ## Role Variables
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role.
-Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
 
-Don't forget to indent the markdown table so it is readable even if not rendered.
-
-| Name       | Required/Default         | Description                                                                                        |
-|------------|:------------------------:|----------------------------------------------------------------------------------------------------|
-| `example1` | :heavy_check_mark:       | Lorem ipsum dolor sit amet, consetetur sadipscing elitr,                                           |
-| `example2` | :heavy_multiplication_x: | Sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. |
-| `example3` | `True`                   | Stet clita kasd gubergren                                                                          |
-| `example4` | `5`                      | No sea takimata sanctus est Lorem ipsum dolor sit amet.                                            |
+| Name                                |                               Required/Default                                | Description                                                                                                                        |
+| ----------------------------------- | :---------------------------------------------------------------------------: | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `node_exporter_version`             |                                   `latest`                                    | The version of node exporter that should be installed. If empty or set to `latest` the variable will be set to the newest release. |
+| `node_exporter_web_listen_address`  |                                `0.0.0.0:9100`                                 | The IP address the service should bind to.                                                                                         |
+| `node_exporter_web_telemetry_path`  |                                  `/metrics`                                   | Path where the metrics should be served.                                                                                           |
+| `node_exporter_textfile_dir`        |                           `/var/lib/node_exporter`                            | Directory for the textfile exporter.                                                                                               |
+| `node_exporter_tls_server_config`   |                                     `{}`                                      | Config for the TLS feature.                                                                                                        |
+| `node_exporter_basic_auth_users`    |                                     `{}`                                      | List of users and BCRYPT password hashes for basic auth.                                                                           |
+| `node_exporter_enabled_collectors`  | `["systemd", {"textfile": {"directory": "{{ node_exporter_textfile_dir}}"}}]` | Collectors and their config, that should be enabled regardless of the default.                                                     |
+| `node_exporter_disabled_collectors` |                                     `[]`                                      | Collectors that should be disabled regardless of the default.                                                                      |
 
 
 ## Example
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+The following example playbook assumes that you cloned this role to `roles/node_exporter`
+(i.e. the name of the role is `node_exporter` instead of `ansible_node_exporter`).
 
 ```yml
+- hosts: monitoring
+  roles:
+    - role: node_exporter
+      node_exporter_tls_server_config:
+        cert_file: /etc/certs/example.com.crt
+        key_file: /etc/certs/example.com.key
+      node_exporter_basic_auth_users:
+        example: $2b$10$LqwcCTNLbemzY8/RMuGTFuB0xKL0CcMcLsZRubJCnnDUNWvucjb3K #user example with password example
 ```
 
 
@@ -39,4 +49,4 @@ This work is licensed under the [MIT License](./LICENSE).
 
 ## Author Information
 
-- [Author Name (nickname)](github profile) _givenname.familyname at stuvus.uni-stuttgart.de_
+- [Sven Feyerabend (SF2311)](https://github.com/SF2311) _sven.feyerabend at stuvus.uni-stuttgart.de_

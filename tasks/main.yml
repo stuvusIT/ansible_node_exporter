@@ -1,2 +1,95 @@
 ---
+- block:
+  - name: Determine latest GitHub release (local)
+    delegate_to: localhost
+    become: false
+    uri:
+      url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"
+      body_format: json
+    register: _github_release
+    until: _github_release.status == 200
+    retries: 5
+
+  - name: Set node_exporter_version
+    set_fact:
+      node_exporter_version: "{{ _github_release.json.tag_name
+        | regex_replace('^v?(.*)$', '\\1') }}"
+  when: (node_exporter_version is not defined) or (node_exporter_version == 'latest')
+  run_once: true
+
+- name: Get systemd version
+  command: systemctl --version
+  changed_when: false
+  check_mode: false
+  register: __systemd_version
+  tags:
+    - skip_ansible_lint
+
+- name: Set systemd version fact
+  set_fact:
+    node_exporter_systemd_version: "{{ __systemd_version.stdout_lines[0] | regex_replace('^systemd\\s(\\d+).*$', '\\1') }}"
+
+- name: create cache directory
+  file:
+    path: /var/cache/node_exporter/{{ node_exporter_version }}
+    state: directory
+
+- name: Download node_exporter and verify SHA256 checksum
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.{{ ansible_system | lower }}-amd64.tar.gz"
+    dest: "/var/cache/node_exporter/{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.tar.gz"
+    checksum: "sha256:https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/sha256sums.txt"
+
+- name: Unpack Release
+  unarchive:
+    src: /var/cache/node_exporter/{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.tar.gz
+    dest: /var/cache/node_exporter/{{ node_exporter_version }}
+    creates: /var/cache/node_exporter/{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter
+    remote_src: yes
+
+- name: Copy node_exporter binary to /usr/local/bin
+  copy:
+    src: /var/cache/node_exporter/{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter
+    dest: /usr/local/bin
+    mode: u=rwx,g=rx,o=rx
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Create config directory
+  file:
+    path: /etc/node_exporter
+    state: directory
+    owner: root
+    group: root
+    mode: 0775
+
+- name: Create config file
+  template:
+    src: templates/config.yaml.j2
+    dest: /etc/node_exporter/config.yaml
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart node_exporter
+
+- name: Create textfile collector dir
+  ansible.builtin.file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    recurse: true
+    mode: u+rwX,g+rwX,o=rX
+  when: node_exporter_textfile_dir | length > 0
+
+- name: Create systemd service
+  template:
+    src: templates/node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart node_exporter
+
 
