@@ -34,7 +34,7 @@
     path: /var/cache/node_exporter/{{ node_exporter_version }}
     state: directory
 
-- name: Download node_exporter and verify SHA256 checksum
+- name: Download node_exporter
   get_url:
     url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.{{ ansible_system | lower }}-amd64.tar.gz"
     dest: "/var/cache/node_exporter/{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.tar.gz"
