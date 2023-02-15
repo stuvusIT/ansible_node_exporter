@@ -22,7 +22,7 @@ If you want to secure your installation by using TLS, you need to provide approp
 | `node_exporter_tls_server_config`   |                                     `{}`                                      | Config for the TLS feature.                                                                                                                                      |
 | `node_exporter_basic_auth_users`    |                                     `{}`                                      | List of users and BCRYPT password hashes for basic auth.                                                                                                         |
 | `node_exporter_enabled_collectors`  | `["systemd", {"textfile": {"directory": "{{ node_exporter_textfile_dir}}"}}]` | Collectors that will be enabled and their respective configuration. In addition to the collectors defined here there may be others, that are enabled by default. |
-| `node_exporter_disabled_collectors` |                                     `[]`                                      | Collectors that should be disabled regardless of the default.                                                                                                    |
+| `node_exporter_disabled_collectors` |                                     `[]`                                      | Collectors that would be enabled by default, but should be disabled.                                                                                             |
 
 
 ## Example
