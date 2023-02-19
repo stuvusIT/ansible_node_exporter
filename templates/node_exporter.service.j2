@@ -31,18 +31,18 @@ Type=simple
 User=root
 Group=root
 ExecStart=/usr/local/bin/node_exporter \
-{% for collector in node_exporter_enabled_collectors -%}
-{%   if not collector is mapping %}
+{% for collector in node_exporter_enabled_collectors.keys() -%}
+{%   set options = node_exporter_enabled_collectors[collector] %}
+{%   if  (options.keys()| length) == 0 %}
     --collector.{{ collector }} \
 {%   else -%}
-{%     set name, options = (collector.items()|list)[0] -%}
-    --collector.{{ name }} \
+    --collector.{{ collector }} \
 {%     for k,v in options|dictsort %}
-    --collector.{{ name }}.{{ k }}={{ v | quote }} \
+    --collector.{{ collector }}.{{ k }}={{ v | quote }} \
 {%     endfor -%}
 {%   endif -%}
 {% endfor -%}
-{% for collector in node_exporter_disabled_collectors %}
+{% for collector in node_exporter_disabled_collectors.keys() %}
     --no-collector.{{ collector }} \
 {% endfor %}
 {% if node_exporter_version is version('1.5.0', '>=') %}
