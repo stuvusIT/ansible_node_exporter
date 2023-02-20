@@ -32,8 +32,8 @@ node_exporter_tls_server_config: {}
 node_exporter_basic_auth_users: {}
 
 node_exporter_enabled_collectors:
-  - systemd
-  - textfile:
-      directory: "{{ node_exporter_textfile_dir }}"
+  systemd: {}
+  textfile:
+    directory: "{{ node_exporter_textfile_dir }}"
 
-node_exporter_disabled_collectors: []
+node_exporter_disabled_collectors: {}
