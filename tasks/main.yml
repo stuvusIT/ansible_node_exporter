@@ -92,4 +92,10 @@
     mode: 0644
   notify: restart node_exporter
 
+- meta: flush_handlers
 
+- name: Start and enable node_exporter
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: true
